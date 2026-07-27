@@ -1,0 +1,74 @@
+{
+  "name": "regex-help-extension",
+  "displayName": "Regex Help",
+  "description": "Explains what a regular expression does when you hover over it in JS/TS code.",
+  "version": "0.0.2",
+  "publisher": "ikukuler",
+  "icon": "images/icon.png",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ikukuler/regex-help-extension.git"
+  },
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Other"
+  ],
+  "keywords": [
+    "regex",
+    "regexp",
+    "hover",
+    "explain"
+  ],
+  "activationEvents": [
+    "onLanguage:javascript",
+    "onLanguage:javascriptreact",
+    "onLanguage:typescript",
+    "onLanguage:typescriptreact"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "regexHelp.explainSelection",
+        "title": "Regex Help: Explain Regex"
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "command": "regexHelp.explainSelection",
+          "when": "editorHasSelection",
+          "group": "navigation"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "compile": "tsc -p ./ --noEmit",
+    "build": "node esbuild.js",
+    "watch": "node esbuild.js --watch",
+    "pretest": "npm run compile && npm run build",
+    "test:unit": "vitest run",
+    "test:integration": "tsc -p tsconfig.test.json && npm run build && node ./out-test/suite/runTest.js",
+    "package": "vsce package"
+  },
+  "devDependencies": {
+    "@types/mocha": "^10.0.10",
+    "@types/node": "^20.11.0",
+    "@types/vscode": "^1.85.0",
+    "@typescript-eslint/typescript-estree": "^7.18.0",
+    "@vscode/test-electron": "^2.3.9",
+    "@vscode/vsce": "^2.24.0",
+    "esbuild": "^0.20.1",
+    "mocha": "^10.3.0",
+    "typescript": "^5.4.5",
+    "vitest": "^1.4.0"
+  },
+  "dependencies": {
+    "@eslint-community/regexpp": "^4.10.0"
+  }
+}
