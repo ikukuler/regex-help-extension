@@ -2,14 +2,10 @@
   "name": "regex-help-extension",
   "displayName": "Regex Help",
   "description": "Explains what a regular expression does when you hover over it in JS/TS code.",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "publisher": "ikukuler",
   "icon": "images/icon.png",
   "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/ikukuler/regex-help-extension.git"
-  },
   "engines": {
     "vscode": "^1.85.0"
   },
@@ -69,6 +65,7 @@
     "vitest": "^1.4.0"
   },
   "dependencies": {
-    "@eslint-community/regexpp": "^4.10.0"
+    "@eslint-community/regexpp": "^4.10.0",
+    "randexp": "^0.5.3"
   }
 }

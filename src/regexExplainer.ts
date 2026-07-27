@@ -101,7 +101,26 @@ function summarize(pattern: Pattern, flags: Flags): string {
 
 function shortDescribeAlternative(alt: Alternative): string {
   if (alt.elements.length === 0) return 'an empty string';
-  const parts = alt.elements.map((el) => shortDescribe(el));
+
+  // Merge consecutive literal characters into a single quoted string, so
+  // /mail/ reads as "mail" rather than "m", then "a", then "i", then "l".
+  const parts: string[] = [];
+  let literalRun = '';
+  const flushRun = () => {
+    if (literalRun.length > 0) {
+      parts.push(`"${literalRun}"`);
+      literalRun = '';
+    }
+  };
+  for (const el of alt.elements) {
+    if (el.type === 'Character') {
+      literalRun += printableChar(el);
+    } else {
+      flushRun();
+      parts.push(shortDescribe(el));
+    }
+  }
+  flushRun();
   return joinParts(parts);
 }
 

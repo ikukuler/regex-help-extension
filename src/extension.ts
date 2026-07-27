@@ -1,14 +1,19 @@
 import * as vscode from 'vscode';
-import { explainRegex } from './regexExplainer';
+import { AstCache } from './astCache';
+import { generateExamples } from './exampleGenerator';
 import { renderExplanationMarkdown } from './explanationRenderer';
-import { findRegexAtOffset } from './regexLocator';
+import { explainRegex } from './regexExplainer';
+import { findRegexInProgram } from './regexLocator';
 
 const LANGUAGES = ['javascript', 'javascriptreact', 'typescript', 'typescriptreact'];
+
+const astCache = new AstCache();
 
 export function activate(context: vscode.ExtensionContext): void {
   context.subscriptions.push(
     vscode.languages.registerHoverProvider(LANGUAGES, { provideHover }),
     vscode.commands.registerCommand('regexHelp.explainSelection', explainSelection),
+    vscode.workspace.onDidCloseTextDocument((doc) => astCache.drop(doc)),
   );
 }
 
@@ -16,29 +21,32 @@ function provideHover(
   document: vscode.TextDocument,
   position: vscode.Position,
 ): vscode.Hover | undefined {
-  const offset = document.offsetAt(position);
-  const jsx =
-    document.languageId === 'javascriptreact' ||
-    document.languageId === 'typescriptreact';
+  const ast = astCache.getAst(document);
+  if (!ast) return undefined;
 
-  const located = findRegexAtOffset(document.getText(), offset, jsx);
+  const offset = document.offsetAt(position);
+  const located = findRegexInProgram(ast, offset);
   if (!located) return undefined;
 
-  let markdown: string;
-  try {
-    const explanation = explainRegex(located.pattern, located.flags);
-    const source = `/${located.pattern}/${located.flags}`;
-    markdown = renderExplanationMarkdown(source, explanation);
-  } catch {
-    return undefined;
-  }
+  const markdown = explainToMarkdown(located.pattern, located.flags);
+  if (!markdown) return undefined;
 
   const range = new vscode.Range(
     document.positionAt(located.range[0]),
     document.positionAt(located.range[1]),
   );
-  const md = new vscode.MarkdownString(markdown);
-  return new vscode.Hover(md, range);
+  return new vscode.Hover(new vscode.MarkdownString(markdown), range);
+}
+
+function explainToMarkdown(pattern: string, flags: string): string | undefined {
+  try {
+    const explanation = explainRegex(pattern, flags);
+    const examples = generateExamples(pattern, flags);
+    const source = `/${pattern}/${flags}`;
+    return renderExplanationMarkdown(source, explanation, examples);
+  } catch {
+    return undefined;
+  }
 }
 
 async function explainSelection(): Promise<void> {
@@ -52,18 +60,10 @@ async function explainSelection(): Promise<void> {
   }
 
   const parsed = splitRegexSource(selected);
-  if (!parsed) {
-    void vscode.window.showWarningMessage(
-      'Regex Help: selection is not a valid regular expression.',
-    );
-    return;
-  }
-
-  let markdown: string;
-  try {
-    const explanation = explainRegex(parsed.pattern, parsed.flags);
-    markdown = renderExplanationMarkdown(`/${parsed.pattern}/${parsed.flags}`, explanation);
-  } catch {
+  const markdown = parsed
+    ? explainToMarkdown(parsed.pattern, parsed.flags)
+    : undefined;
+  if (!markdown) {
     void vscode.window.showWarningMessage(
       'Regex Help: selection is not a valid regular expression.',
     );

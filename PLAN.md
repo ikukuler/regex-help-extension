@@ -49,3 +49,29 @@ regex-help-extension/
 7. Integration smoke test opening a fixture file and asserting hover content is non-empty over a known regex and `undefined` elsewhere.
 8. README with usage + example screenshot placeholder, CHANGELOG, MIT LICENSE.
 9. Verify manually: build, launch Extension Development Host, hover over sample regexes in a scratch file.
+
+## Status
+
+- **v0.0.1** — initial release, published to Open VSX (namespace `ikukuler`).
+- **v0.0.2** — extension icon (orange `/.*/` on black), README cleanup. Published.
+- **v0.0.3** — example matches in hover (randexp + `.test()` verification, named-group support via AST rewrite), per-document AST cache (LRU, 20 docs), merged literal runs in summaries. Packaged; publish pending. (`repository` field intentionally omitted while the GitHub repo is private.)
+
+## Next: regex diagnostics (planned)
+
+Turn the extension from an explainer into a linter that catches real bugs. New module `regexDiagnostics.ts` walking the existing regexpp AST + a `vscode.DiagnosticCollection` (warning squiggles on the regex literal, updated on open/change of JS/TS documents, reusing `AstCache` to find all regex literals in the file).
+
+Checks, in priority order:
+
+1. **Catastrophic backtracking / ReDoS** (severity: Warning)
+   - Nested quantifiers where the inner element can match repeatedly: `(a+)+`, `(\d*)*`, `(?:x+)+` — exponential blowup on non-matching input (demo: `/^(a+)+$/.test('a'.repeat(30)+'!')` ≈ 7 s, +2 chars ≈ ×4).
+   - Overlapping alternatives under a quantifier: `(a|ab)+`, `(.|\n)*`.
+   - Approach: star-height analysis over the AST (flag quantifier nodes whose subtree contains another unbounded quantifier with a non-disjoint first set). Consider `safe-regex`-style heuristic as a baseline; avoid false positives on bounded repetition (`{2,5}`).
+   - Real-world motivation: Stack Overflow's 34-minute outage (2016) from one such regex.
+2. **Empty character class** (severity: Warning)
+   - `[]` never matches anything in JS (valid syntax, always-failing regex) — almost certainly a bug.
+   - `[^]` matches everything incl. newlines — often accidental, suggest `.` + `s` flag or `[\s\S]` explicitly.
+3. **Useless escapes** (severity: Hint/Information)
+   - Escaping non-special chars outside classes (`\-` outside `[...]`) and inside classes (`[\.]` → `[.]`).
+   - regexpp exposes these as `Character` nodes where `raw` starts with `\` but the char isn't special in context.
+
+Config: a setting `regexHelp.diagnostics.enabled` (default true) and per-check toggles. Diagnostics must never fire on patterns regexpp can't parse (same silent-skip policy as hover).

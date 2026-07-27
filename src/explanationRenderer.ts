@@ -3,12 +3,20 @@ import type { ExplanationNode, RegexExplanation } from './regexExplainer';
 export function renderExplanationMarkdown(
   source: string,
   explanation: RegexExplanation,
+  examples: string[] = [],
 ): string {
   const lines: string[] = [];
   lines.push(`**Regex** \`${source}\``);
   lines.push('');
   lines.push(explanation.summary);
   lines.push('');
+
+  if (examples.length > 0) {
+    lines.push(
+      `**Example matches**: ${examples.map((e) => `\`${escapeCode(e)}\``).join(', ')}`,
+    );
+    lines.push('');
+  }
 
   if (explanation.breakdown.length > 0) {
     lines.push('**Breakdown**');

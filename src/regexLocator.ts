@@ -8,19 +8,15 @@ export interface LocatedRegex {
 }
 
 /**
- * Finds the regex literal that contains the given source offset, using a full
- * JS/TS parse so that division (`a / b / c`) is never mistaken for a regex.
- * Returns undefined when the file doesn't parse or the offset isn't inside a
- * regex literal.
+ * Parses JS/TS source into an AST suitable for findRegexInProgram.
+ * Returns undefined when the file doesn't parse.
  */
-export function findRegexAtOffset(
+export function parseProgram(
   sourceText: string,
-  offset: number,
   jsx: boolean,
-): LocatedRegex | undefined {
-  let ast: TSESTree.Program;
+): TSESTree.Program | undefined {
   try {
-    ast = parse(sourceText, {
+    return parse(sourceText, {
       jsx,
       loc: false,
       range: true,
@@ -31,7 +27,17 @@ export function findRegexAtOffset(
   } catch {
     return undefined;
   }
+}
 
+/**
+ * Finds the regex literal that contains the given source offset. Because the
+ * search runs over a full JS/TS parse, division (`a / b / c`) is never
+ * mistaken for a regex.
+ */
+export function findRegexInProgram(
+  ast: TSESTree.Program,
+  offset: number,
+): LocatedRegex | undefined {
   let found: LocatedRegex | undefined;
 
   const visit = (node: TSESTree.Node): void => {
@@ -65,6 +71,16 @@ export function findRegexAtOffset(
 
   visit(ast);
   return found;
+}
+
+/** Convenience wrapper: parse + locate in one call (used by tests). */
+export function findRegexAtOffset(
+  sourceText: string,
+  offset: number,
+  jsx: boolean,
+): LocatedRegex | undefined {
+  const ast = parseProgram(sourceText, jsx);
+  return ast ? findRegexInProgram(ast, offset) : undefined;
 }
 
 function isNode(value: unknown): value is TSESTree.Node {
