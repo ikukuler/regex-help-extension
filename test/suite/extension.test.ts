@@ -4,6 +4,7 @@ import * as vscode from 'vscode';
 const FIXTURE = [
   'const re = /^[a-z]+\\d{2}$/i;',
   'const division = 10 / 2 / 1;',
+  'const evil = /(a+)+$/;',
 ].join('\n');
 
 async function getHovers(
@@ -50,5 +51,22 @@ describe('regex-help-extension', () => {
     const hovers = await getHovers(doc, position);
     const text = hoverTexts(hovers);
     assert.ok(!text.includes('Breakdown'), `unexpected regex hover: ${text}`);
+  });
+
+  it('reports a ReDoS diagnostic for /(a+)+$/', async () => {
+    // Diagnostics are produced asynchronously after the document opens.
+    const deadline = Date.now() + 10000;
+    let diagnostics: vscode.Diagnostic[] = [];
+    while (Date.now() < deadline) {
+      diagnostics = vscode.languages
+        .getDiagnostics(doc.uri)
+        .filter((d) => d.source === 'Regex Help');
+      if (diagnostics.length > 0) break;
+      await new Promise((resolve) => setTimeout(resolve, 200));
+    }
+    assert.strictEqual(diagnostics.length, 1, 'expected one diagnostic');
+    assert.strictEqual(diagnostics[0].code, 'redos');
+    assert.strictEqual(diagnostics[0].range.start.line, 2);
+    assert.ok(/catastrophic backtracking/i.test(diagnostics[0].message));
   });
 });

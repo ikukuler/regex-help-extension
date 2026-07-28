@@ -54,9 +54,11 @@ regex-help-extension/
 
 - **v0.0.1** — initial release, published to Open VSX (namespace `ikukuler`).
 - **v0.0.2** — extension icon (orange `/.*/` on black), README cleanup. Published.
-- **v0.0.3** — example matches in hover (randexp + `.test()` verification, named-group support via AST rewrite), per-document AST cache (LRU, 20 docs), merged literal runs in summaries. Packaged; publish pending. (`repository` field intentionally omitted while the GitHub repo is private.)
+- **v0.0.3** — example matches in hover (randexp + `.test()` verification, named-group support via AST rewrite), per-document AST cache (LRU, 20 docs), merged literal runs in summaries. Never published standalone; shipped as part of 0.0.4. (`repository` field intentionally omitted while the GitHub repo is private.)
+- **v0.0.4** — 0.0.3 content + tag-triggered auto-publish via GitHub Actions (OVSX_PAT secret). Published.
+- **v0.0.5** — regex diagnostics (see below). Built and tested; release = commit → `npm version patch` → `git push && git push --tags`.
 
-## Next: regex diagnostics (planned)
+## Regex diagnostics (shipped in 0.0.5)
 
 Turn the extension from an explainer into a linter that catches real bugs. New module `regexDiagnostics.ts` walking the existing regexpp AST + a `vscode.DiagnosticCollection` (warning squiggles on the regex literal, updated on open/change of JS/TS documents, reusing `AstCache` to find all regex literals in the file).
 
@@ -75,3 +77,5 @@ Checks, in priority order:
    - regexpp exposes these as `Character` nodes where `raw` starts with `\` but the char isn't special in context.
 
 Config: a setting `regexHelp.diagnostics.enabled` (default true) and per-check toggles. Diagnostics must never fire on patterns regexpp can't parse (same silent-skip policy as hover).
+
+Implementation notes (0.0.5): `regexDiagnostics.ts` (pure analyzer, unit-tested) + `diagnosticsManager.ts` (DiagnosticCollection, 300 ms debounce on change, reuses AstCache, live settings updates). The overlapping-alternatives ReDoS check (`(a|ab)+`) was deferred — only the star-height heuristic (nested unbounded quantifiers) shipped; revisit if false negatives bite.

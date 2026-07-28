@@ -27,6 +27,31 @@
   ],
   "main": "./dist/extension.js",
   "contributes": {
+    "configuration": {
+      "title": "Regex Help",
+      "properties": {
+        "regexHelp.diagnostics.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Analyze regex literals and report hazards as diagnostics."
+        },
+        "regexHelp.diagnostics.redos": {
+          "type": "boolean",
+          "default": true,
+          "description": "Warn about potential catastrophic backtracking (ReDoS), e.g. nested unbounded quantifiers like (a+)+."
+        },
+        "regexHelp.diagnostics.emptyClass": {
+          "type": "boolean",
+          "default": true,
+          "description": "Warn about empty character classes: [] never matches; [^] matches everything including newlines."
+        },
+        "regexHelp.diagnostics.uselessEscape": {
+          "type": "boolean",
+          "default": true,
+          "description": "Hint when an escape has no effect, e.g. \\- outside a character class."
+        }
+      }
+    },
     "commands": [
       {
         "command": "regexHelp.explainSelection",

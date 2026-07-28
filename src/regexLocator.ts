@@ -73,6 +73,36 @@ export function findRegexInProgram(
   return found;
 }
 
+/** Collects every regex literal in the program, in source order. */
+export function findAllRegexes(ast: TSESTree.Program): LocatedRegex[] {
+  const results: LocatedRegex[] = [];
+
+  const visit = (node: TSESTree.Node): void => {
+    if (node.type === 'Literal' && 'regex' in node && node.regex) {
+      results.push({
+        pattern: node.regex.pattern,
+        flags: node.regex.flags,
+        range: [node.range[0], node.range[1]],
+      });
+      return;
+    }
+    for (const key of Object.keys(node)) {
+      if (key === 'parent') continue;
+      const value = (node as unknown as Record<string, unknown>)[key];
+      if (Array.isArray(value)) {
+        for (const item of value) {
+          if (isNode(item)) visit(item);
+        }
+      } else if (isNode(value)) {
+        visit(value);
+      }
+    }
+  };
+
+  visit(ast);
+  return results;
+}
+
 /** Convenience wrapper: parse + locate in one call (used by tests). */
 export function findRegexAtOffset(
   sourceText: string,

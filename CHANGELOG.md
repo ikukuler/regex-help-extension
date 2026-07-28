@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.0.5
+
+- **Regex diagnostics**: regex literals are now analyzed as you type, with squiggles for
+  - potential catastrophic backtracking / ReDoS (nested unbounded quantifiers like `(a+)+`) — Warning
+  - `[]` (never matches anything) — Warning; `[^]` (matches everything incl. newlines) — Information
+  - useless escapes (`\-` outside a class, `[\.]` inside) — Hint
+- New settings: `regexHelp.diagnostics.enabled` plus per-check toggles (`redos`, `emptyClass`, `uselessEscape`).
+
 ## 0.0.4
 
 - Publishing is now automated via GitHub Actions (tag-triggered, gated by the full test suite).

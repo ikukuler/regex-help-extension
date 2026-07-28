@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { AstCache } from './astCache';
+import { DiagnosticsManager } from './diagnosticsManager';
 import { generateExamples } from './exampleGenerator';
 import { renderExplanationMarkdown } from './explanationRenderer';
 import { explainRegex } from './regexExplainer';
@@ -10,11 +11,28 @@ const LANGUAGES = ['javascript', 'javascriptreact', 'typescript', 'typescriptrea
 const astCache = new AstCache();
 
 export function activate(context: vscode.ExtensionContext): void {
+  const diagnostics = new DiagnosticsManager(LANGUAGES, astCache);
+
   context.subscriptions.push(
     vscode.languages.registerHoverProvider(LANGUAGES, { provideHover }),
     vscode.commands.registerCommand('regexHelp.explainSelection', explainSelection),
-    vscode.workspace.onDidCloseTextDocument((doc) => astCache.drop(doc)),
+    diagnostics,
+    vscode.workspace.onDidOpenTextDocument((doc) => diagnostics.refresh(doc)),
+    vscode.workspace.onDidChangeTextDocument((e) =>
+      diagnostics.scheduleRefresh(e.document),
+    ),
+    vscode.workspace.onDidCloseTextDocument((doc) => {
+      astCache.drop(doc);
+      diagnostics.drop(doc);
+    }),
+    vscode.workspace.onDidChangeConfiguration((e) => {
+      if (e.affectsConfiguration('regexHelp.diagnostics')) {
+        diagnostics.refreshAllOpen();
+      }
+    }),
   );
+
+  diagnostics.refreshAllOpen();
 }
 
 function provideHover(
