@@ -2,7 +2,7 @@
   "name": "regex-help-extension",
   "displayName": "Regex Help",
   "description": "Explains what a regular expression does when you hover over it in JS/TS code.",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "publisher": "ikukuler",
   "icon": "images/icon.png",
   "license": "MIT",
