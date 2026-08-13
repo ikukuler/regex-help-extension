@@ -126,10 +126,44 @@ describe('renderExplanationMarkdown', () => {
   it('renders summary, breakdown and flags sections', () => {
     const e = explainRegex('^a+$', 'g');
     const md = renderExplanationMarkdown('/^a+$/g', e);
-    expect(md).toContain('**Regex** `/^a+$/g`');
+    expect(md).toContain('```js\n/^a+$/g\n```');
     expect(md).toContain('**Breakdown**');
     expect(md).toContain('**Flags**');
     expect(md).toContain('- `g` —');
+  });
+
+  it('assigns a category to every fragment kind', () => {
+    const categoryOfFirst = (pattern: string) =>
+      explainRegex(pattern, '').breakdown[0].category;
+    expect(categoryOfFirst('abc')).toBe('literal');
+    expect(categoryOfFirst('[a-z]')).toBe('class');
+    expect(categoryOfFirst('\\d')).toBe('class');
+    expect(categoryOfFirst('a+')).toBe('quantifier');
+    expect(categoryOfFirst('(a)')).toBe('group');
+    expect(categoryOfFirst('(?:a)')).toBe('group');
+    expect(categoryOfFirst('^')).toBe('anchor');
+    expect(categoryOfFirst('\\b')).toBe('anchor');
+    expect(categoryOfFirst('(?=a)')).toBe('lookaround');
+    expect(categoryOfFirst('(?<!a)b')).toBe('lookaround');
+    expect(explainRegex('(a)\\1', '').breakdown[1].category).toBe('backref');
+  });
+
+  it('emits colored HTML fragments only when colors are enabled', () => {
+    const e = explainRegex('(a+)', '');
+    const plain = renderExplanationMarkdown('/(a+)/', e, []);
+    expect(plain).toContain('- `(a+)` —');
+    expect(plain).not.toContain('<span');
+
+    const colored = renderExplanationMarkdown('/(a+)/', e, [], { colors: true });
+    expect(colored).toContain('<code><span style="color:#b07fc7;">(a+)</span></code>');
+    expect(colored).not.toContain('- `(a+)` —');
+  });
+
+  it('escapes HTML in colored fragments', () => {
+    const e = explainRegex('(?<tag>x)', '');
+    const colored = renderExplanationMarkdown('/(?<tag>x)/', e, [], { colors: true });
+    expect(colored).toContain('(?&lt;tag&gt;x)');
+    expect(colored).not.toContain('(?<tag>x)</span>');
   });
 
   it('indents nested nodes', () => {

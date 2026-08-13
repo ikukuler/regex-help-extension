@@ -54,7 +54,7 @@ regex-help-extension/
 
 - **v0.0.1** — initial release, published to Open VSX (namespace `ikukuler`).
 - **v0.0.2** — extension icon (orange `/.*/` on black), README cleanup. Published.
-- **v0.0.3** — example matches in hover (randexp + `.test()` verification, named-group support via AST rewrite), per-document AST cache (LRU, 20 docs), merged literal runs in summaries. Never published standalone; shipped as part of 0.0.4. (`repository` field intentionally omitted while the GitHub repo is private.)
+- **v0.0.3** — example matches in hover (randexp + `.test()` verification, named-group support via AST rewrite), per-document AST cache (LRU, 20 docs), merged literal runs in summaries. Never published standalone; shipped as part of 0.0.4.
 - **v0.0.4** — 0.0.3 content + tag-triggered auto-publish via GitHub Actions (OVSX_PAT secret). Published.
 - **v0.0.5** — regex diagnostics (see below). Built and tested; release = commit → `npm version patch` → `git push && git push --tags`.
 

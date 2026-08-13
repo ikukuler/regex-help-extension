@@ -45,6 +45,19 @@ describe('regex-help-extension', () => {
     assert.ok(text.includes('case-insensitive'), 'expected flag description');
   });
 
+  it('marks hover markdown as html-enabled so fragment colors survive', async () => {
+    const hovers = await getHovers(doc, new vscode.Position(0, 15));
+    const content = hovers.flatMap((h) => h.contents).find((c) => {
+      const value = typeof c === 'string' ? c : (c as vscode.MarkdownString).value;
+      return value.includes('Breakdown');
+    }) as vscode.MarkdownString;
+    assert.strictEqual(content.supportHtml, true, 'supportHtml must be set');
+    assert.ok(
+      /<span style="color:#[0-9a-f]{6};">/.test(content.value),
+      'expected colored fragments in the breakdown',
+    );
+  });
+
   it('does not provide a regex hover over division', async () => {
     // Position inside `10 / 2 / 1` on line 1.
     const position = new vscode.Position(1, 22);

@@ -46,22 +46,29 @@ function provideHover(
   const located = findRegexInProgram(ast, offset);
   if (!located) return undefined;
 
-  const markdown = explainToMarkdown(located.pattern, located.flags);
+  const markdown = explainToMarkdown(located.pattern, located.flags, true);
   if (!markdown) return undefined;
 
   const range = new vscode.Range(
     document.positionAt(located.range[0]),
     document.positionAt(located.range[1]),
   );
-  return new vscode.Hover(new vscode.MarkdownString(markdown), range);
+  const md = new vscode.MarkdownString(markdown);
+  // Fragment colors in the breakdown are inline <span style="color:…">.
+  md.supportHtml = true;
+  return new vscode.Hover(md, range);
 }
 
-function explainToMarkdown(pattern: string, flags: string): string | undefined {
+function explainToMarkdown(
+  pattern: string,
+  flags: string,
+  colors: boolean,
+): string | undefined {
   try {
     const explanation = explainRegex(pattern, flags);
     const examples = generateExamples(pattern, flags);
     const source = `/${pattern}/${flags}`;
-    return renderExplanationMarkdown(source, explanation, examples);
+    return renderExplanationMarkdown(source, explanation, examples, { colors });
   } catch {
     return undefined;
   }
@@ -79,7 +86,7 @@ async function explainSelection(): Promise<void> {
 
   const parsed = splitRegexSource(selected);
   const markdown = parsed
-    ? explainToMarkdown(parsed.pattern, parsed.flags)
+    ? explainToMarkdown(parsed.pattern, parsed.flags, false)
     : undefined;
   if (!markdown) {
     void vscode.window.showWarningMessage(

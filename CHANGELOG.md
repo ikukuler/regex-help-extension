@@ -2,6 +2,8 @@
 
 ## 0.0.5
 
+- Hover now shows the pattern in a syntax-highlighted code block, colored by your editor theme.
+- Breakdown fragments are color-coded by kind: groups, quantifiers, character classes, anchors, lookarounds and backreferences each get their own color.
 - **Regex diagnostics**: regex literals are now analyzed as you type, with squiggles for
   - potential catastrophic backtracking / ReDoS (nested unbounded quantifiers like `(a+)+`) — Warning
   - `[]` (never matches anything) — Warning; `[^]` (matches everything incl. newlines) — Information

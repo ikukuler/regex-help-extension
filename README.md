@@ -7,6 +7,7 @@ Fully local: no network calls, no LLM, no telemetry. Powered by [`@eslint-commun
 ## Features
 
 - **Hover explanations** for regex literals (`/pattern/flags`) in `.js`, `.jsx`, `.ts`, `.tsx` files: summary sentence, example matches, part-by-part breakdown, flag descriptions.
+- **Color-coded breakdown** — each fragment is colored by what it is (group, quantifier, character class, anchor, lookaround, backreference), so a long pattern is easy to scan.
 - **Example matches** — each hover includes generated sample strings, every one verified against the pattern before display (named groups and backreferences supported).
 - **Accurate detection** — the file is parsed as JS/TS, so division (`a / b / c`) is never mistaken for a regex. Parsed ASTs are cached per document, so hovers stay instant in large files.
 - **Full ES2024 syntax**: named groups, lookahead/lookbehind, backreferences, unicode property escapes (`\p{...}`), `v`-flag class set operations, all flags (`g i m s u y d v`).
@@ -61,6 +62,10 @@ None. Works out of the box in VS Code, Cursor, and other VS Code-compatible edit
 
 - Only regex *literals* get hover explanations. Patterns built from strings (`new RegExp(str)`) can be explained via the *Explain Regex* command on a selection.
 - Invalid patterns are silently ignored (no hover) rather than reported.
+
+## Source and issues
+
+Code lives at [github.com/ikukuler/regex-help-extension](https://github.com/ikukuler/regex-help-extension) — bug reports and feature requests are welcome in the [issue tracker](https://github.com/ikukuler/regex-help-extension/issues).
 
 ## License
 

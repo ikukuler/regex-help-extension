@@ -21,11 +21,24 @@ import type {
   Quantifier,
 } from '@eslint-community/regexpp/ast';
 
+/** What a fragment is, so the renderer can color-code it. */
+export type NodeCategory =
+  | 'literal'
+  | 'class'
+  | 'quantifier'
+  | 'group'
+  | 'anchor'
+  | 'lookaround'
+  | 'backref'
+  | 'other';
+
 export interface ExplanationNode {
   /** Raw regex fragment, shown as inline code. */
   code: string;
   /** Human-readable description of the fragment. */
   text: string;
+  /** Absent for structural nodes (alternatives, empty pattern). */
+  category?: NodeCategory;
   children: ExplanationNode[];
 }
 
@@ -233,7 +246,7 @@ function explainAlternativeElements(alt: Alternative): ExplanationNode[] {
       literalRun.length === 1
         ? `matches the character ${charName(literalRun[0])}`
         : `matches the literal text "${literalRun.map((c) => printableChar(c)).join('')}"`;
-    nodes.push({ code: raw, text, children: [] });
+    nodes.push({ code: raw, text, category: 'literal', children: [] });
     literalRun = [];
   };
 
@@ -253,7 +266,38 @@ function explainAlternativeElements(alt: Alternative): ExplanationNode[] {
   return nodes;
 }
 
+function categoryOf(el: Element | CharacterClassElement): NodeCategory {
+  switch (el.type) {
+    case 'Character':
+      return 'literal';
+    case 'CharacterSet':
+    case 'CharacterClass':
+    case 'ExpressionCharacterClass':
+    case 'CharacterClassRange':
+    case 'ClassStringDisjunction':
+      return 'class';
+    case 'Quantifier':
+      return 'quantifier';
+    case 'CapturingGroup':
+    case 'Group':
+      return 'group';
+    case 'Backreference':
+      return 'backref';
+    case 'Assertion':
+      return el.kind === 'lookahead' || el.kind === 'lookbehind'
+        ? 'lookaround'
+        : 'anchor';
+    default:
+      return 'other';
+  }
+}
+
+/** Stamps the category onto whatever the per-type explainer produced. */
 function explainElement(el: Element): ExplanationNode {
+  return { ...explainElementBody(el), category: categoryOf(el) };
+}
+
+function explainElementBody(el: Element): Omit<ExplanationNode, 'category'> {
   switch (el.type) {
     case 'Character':
       return {
@@ -400,6 +444,12 @@ function classOperandNode(
 }
 
 function explainClassElementNode(el: CharacterClassElement): ExplanationNode {
+  return { ...explainClassElementBody(el), category: categoryOf(el) };
+}
+
+function explainClassElementBody(
+  el: CharacterClassElement,
+): Omit<ExplanationNode, 'category'> {
   switch (el.type) {
     case 'Character':
       return { code: el.raw, text: `the character ${charName(el)}`, children: [] };
